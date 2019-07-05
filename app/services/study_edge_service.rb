@@ -14,9 +14,14 @@ class StudyEdgeService
 
     is_workflow = (@params[:crowd_agg_filters] || []).any? { |x| x[:field]&.downcase&.starts_with("wf_") }
 
+    next_study = next_study(study: study)
+    prev_study = next_study(study: study, reverse: true)
+
     OpenStruct.new(
-      next_id: next_study_id(study: study),
-      prev_id: next_study_id(study: study, reverse: true),
+      next_id: next_study && next_study[:id],
+      prev_id: prev_study && prev_study[:id],
+      study_index: prev_study && prev_study[:total] + 1,
+      study_count: prev_study && next_study && prev_study[:total] + next_study[:total] + 1,
       is_workflow: is_workflow,
       study: study,
     )
@@ -49,20 +54,24 @@ class StudyEdgeService
   # When there are potentially several columns to sort by with nils we take 2 variants for each nil entry.
   # 4) desc sort + current field value is not nil. This is a TODO. Currently the result (prev study)
   # is returned even for the 1st entry. That could be fixed, but needs more conding time.
-  def next_study_id(study:, reverse: false)
+  def next_study(study:, reverse: false)
     return nil if study.blank?
 
     sort_values_variants(study, reverse).each do |sort_values|
-      id = @search_service.search(
-        search_after: sort_values,
-        reverse: reverse,
-      )&.dig(:studies)&.first&.id
-      return id unless id.nil?
+      search_result = 
+        @search_service.search(
+          search_after: sort_values,
+          reverse: reverse,
+        )
+      id = search_result&.dig(:studies)&.first&.id
+      # total = search_result&.dig(:recordsTotal)
+      total = search_result&.dig(:studies).count
+      return { id: id, total: total } unless id.nil?
     end
 
     nil
   end
-
+  
   # All variants of sort_params as specified in clause 3 above.
   def sort_values_variants(study, reverse)
     sort_params = sort_values(study, reverse)
