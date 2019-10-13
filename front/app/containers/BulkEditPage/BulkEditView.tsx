@@ -23,10 +23,21 @@ import {
   prop,
 } from 'ramda';
 
+interface Undo {
+  description : string
+}
+interface Label {
+  name : string
+  value : string
+}
+
 interface BulkEditProps {
   labels : String[]
+  commit : (toAdd:Label[], toRemove:Label[], description:string) => Undo
 }
 interface BulkEditState {
+  labelsToAdd : Label[]
+  labelsToRemove : Label[]
 }
 
 class BulkEditView extends React.Component<BulkEditProps, BulkEditState> {

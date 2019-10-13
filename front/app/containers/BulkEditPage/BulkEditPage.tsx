@@ -24,11 +24,30 @@ import {
 import SiteProvider from 'containers/SiteProvider';
 import WorkflowsViewProvider from 'containers/WorkflowsViewProvider';
 import BulkEditView from './BulkEditView'
+import BulkSuggestedLabels from './BulkSuggestedLabels'
+
 
 interface BulkEditProps {
   match: match<{ searchId?: string }>;
 }
 class BulkEditPage extends React.PureComponent<BulkEditProps> {
+  renderWorkflow(workflow:WorkflowConfigFragment) {
+    const allowedSuggestedLabels = displayFields(
+      workflow.suggestedLabelsFilter.kind,
+      workflow.suggestedLabelsFilter.values,
+      workflow.allSuggestedLabels.map(name => ({ name, rank: null })),
+    ).map(prop('name'));
+
+    // todo:
+    // Need to get the mutation function
+    // Need to look up the facet values
+
+    // BulkMutationComponent
+    // --> bulkUpdateMutation(query, tags) => undo
+      
+    // return <BulkEditView labels={allowedSuggestedLabels} />
+    return <div>!</div>
+  }
   render() {
       return (
         <WorkflowsViewProvider>
@@ -37,20 +56,7 @@ class BulkEditPage extends React.PureComponent<BulkEditProps> {
               prop('workflows'),
               find(propEq('name', "wf_bulk")),
             )(workflowsView) as WorkflowConfigFragment | null;
-         
-            if (workflow) {
-              const allowedSuggestedLabels = displayFields(
-                workflow.suggestedLabelsFilter.kind,
-                workflow.suggestedLabelsFilter.values,
-                workflow.allSuggestedLabels.map(name => ({ name, rank: null })),
-              ).map(prop('name'));
-                
-              return <BulkEditView labels={allowedSuggestedLabels} />
-
-            }
-            else {
-              return null;
-            }
+            return workflow ? this.renderWorkflow(workflow) : null;
           }}
         </WorkflowsViewProvider>
       )
